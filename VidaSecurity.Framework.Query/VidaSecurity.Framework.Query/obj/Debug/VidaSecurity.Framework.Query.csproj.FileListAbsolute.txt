@@ -1,0 +1,8 @@
+D:\ProyectoSatelite\VidaSecurity.Framework.Query\VidaSecurity.Framework.Query\bin\Debug\VidaSecurity.Framework.Query.dll
+D:\ProyectoSatelite\VidaSecurity.Framework.Query\VidaSecurity.Framework.Query\bin\Debug\VidaSecurity.Framework.Query.pdb
+D:\ProyectoSatelite\VidaSecurity.Framework.Query\VidaSecurity.Framework.Query\bin\Debug\Newtonsoft.Json.dll
+D:\ProyectoSatelite\VidaSecurity.Framework.Query\VidaSecurity.Framework.Query\bin\Debug\Newtonsoft.Json.xml
+D:\ProyectoSatelite\VidaSecurity.Framework.Query\VidaSecurity.Framework.Query\obj\Debug\VidaSecurity.Framework.Query.csprojResolveAssemblyReference.cache
+D:\ProyectoSatelite\VidaSecurity.Framework.Query\VidaSecurity.Framework.Query\obj\Debug\VidaSecurity.Framework.Query.dll
+D:\ProyectoSatelite\VidaSecurity.Framework.Query\VidaSecurity.Framework.Query\obj\Debug\VidaSecurity.Framework.Query.pdb
+D:\ProyectoSatelite\VidaSecurity.Framework.Query\VidaSecurity.Framework.Query\bin\Debug\Newtonsoft.Json.pdb

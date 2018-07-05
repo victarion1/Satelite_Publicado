@@ -1,0 +1,17 @@
+D:\ProyectoSatelite\VidaSecurity.Satelite\VidaSecurity.Satelite\bin\Release\VidaSecurity.Satelite.dll
+D:\ProyectoSatelite\VidaSecurity.Satelite\VidaSecurity.Satelite\bin\Release\VidaSecurity.Satelite.pdb
+D:\ProyectoSatelite\VidaSecurity.Satelite\VidaSecurity.Satelite\bin\Release\FrameWork.Common.dll
+D:\ProyectoSatelite\VidaSecurity.Satelite\VidaSecurity.Satelite\bin\Release\FrameWork.Data.dll
+D:\ProyectoSatelite\VidaSecurity.Satelite\VidaSecurity.Satelite\bin\Release\FrameWork.Logging.dll
+D:\ProyectoSatelite\VidaSecurity.Satelite\VidaSecurity.Satelite\bin\Release\Newtonsoft.Json.dll
+D:\ProyectoSatelite\VidaSecurity.Satelite\VidaSecurity.Satelite\bin\Release\VidaSecurity.Framework.Query.dll
+D:\ProyectoSatelite\VidaSecurity.Satelite\VidaSecurity.Satelite\bin\Release\Microsoft.Practices.EnterpriseLibrary.Data.dll
+D:\ProyectoSatelite\VidaSecurity.Satelite\VidaSecurity.Satelite\bin\Release\FrameWork.Security.dll
+D:\ProyectoSatelite\VidaSecurity.Satelite\VidaSecurity.Satelite\bin\Release\FrameWork.Web.dll
+D:\ProyectoSatelite\VidaSecurity.Satelite\VidaSecurity.Satelite\bin\Release\Microsoft.Practices.EnterpriseLibrary.Common.dll
+D:\ProyectoSatelite\VidaSecurity.Satelite\VidaSecurity.Satelite\bin\Release\VidaSecurity.Framework.Query.pdb
+D:\ProyectoSatelite\VidaSecurity.Satelite\VidaSecurity.Satelite\bin\Release\Newtonsoft.Json.xml
+D:\ProyectoSatelite\VidaSecurity.Satelite\VidaSecurity.Satelite\obj\Release\VidaSecurity.Satelite.csprojResolveAssemblyReference.cache
+D:\ProyectoSatelite\VidaSecurity.Satelite\VidaSecurity.Satelite\obj\Release\VidaSecurity.Satelite.dll
+D:\ProyectoSatelite\VidaSecurity.Satelite\VidaSecurity.Satelite\obj\Release\VidaSecurity.Satelite.pdb
+D:\ProyectoSatelite\VidaSecurity.Satelite\VidaSecurity.Satelite\bin\Release\Newtonsoft.Json.pdb

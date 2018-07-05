@@ -1,0 +1,58 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeFile="BaseSatelite.master.cs" Inherits="BaseSatelite" %>
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es-cl">
+<head runat="server">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Satelite</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous"/>
+        <link rel="stylesheet" href="Content/datatables.css" />
+    <link rel="stylesheet" href="Content/bootstrap-treeview.min.css"/>
+      <link rel="stylesheet" href="Content/buttons.dataTables.css"/>
+      <link rel="stylesheet" href="Content/buttons.jqueryui.css"/>
+    <link rel="stylesheet" href="Content/buttons.jqueryui.min.css"/>
+    <link rel="stylesheet" href="Content/jquery.loading.min.css"/>
+    <link rel="stylesheet" href="Content/jquery-ui.min.css"/>
+ 
+
+    <asp:ContentPlaceHolder ID="Cabecera" runat="server">
+    </asp:ContentPlaceHolder>
+</head>
+<body>
+    <div class="container">
+        <br />   
+        <script type="text/javascript" src="Scripts/jquery-3.0.0.js"></script>
+       <script type="text/javascript" src="Scripts/datatables.js"></script>
+        <script type="text/javascript" src="Scripts/dataTables.buttons.min.js"></script>
+        <script type="text/javascript" src="Scripts/dataTables.buttons.js"></script>
+        <script type="text/javascript" src="Scripts/jszip.js"></script>
+         <script type="text/javascript" src="Scripts/jszip.min.js"></script>
+        <script type="text/javascript" src="Scripts/buttons.flash.js"></script>
+        <script type="text/javascript" src="Scripts/buttons.html5.js"></script>
+        <script type="text/javascript" src="Scripts/bootstrap-treeview.min.js"></script>
+        <script type="text/javascript" src="Scripts/bootstrap3.3.7.min.js"></script>
+        <script type="text/javascript" src="Scripts/servicio.js"></script>
+        <script type="text/javascript" src="Scripts/comun.js"></script>
+        <script type="text/javascript" src="Scripts/jquery.loading.min.js"></script>
+        <script type="text/javascript" src="Scripts/configuracionDialog.js"></script>
+        <script type="text/javascript" src="Scripts/jquery-ui-1.12.1.js"></script>
+
+        <form id="form1" runat="server">
+            <div class="table">
+                <div class="row">
+                    <div class="col-12 col-md-12 col-lg-12 col-xl-12">
+                        <asp:ContentPlaceHolder ID="Cuerpo" runat="server">
+                        </asp:ContentPlaceHolder>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
