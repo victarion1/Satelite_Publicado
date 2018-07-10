@@ -5,21 +5,12 @@ var titulo = "";
 var table;
 var nomConsulta;
 var parametroParaExcel;
+var NombreParamExcel;
+//Formatea fecha
 
 
 function AlertaInvocacion(url) {
     window.console && console.log('Invocando servicio... - ' + url);
-}
-function webservices() {
-    var url="WsPrueba.asmx/HelloWorld";
-    var parametros = "";
-    consumeWs(
-       url,
-       parametros,
-       function () { AlertaInvocacion(url); }, //Antes
-       function (data) {console.log(data); }, //Despues Exitoso       
-       function (error) { ErrorGenerico(error); } //En caso de Error
-       );
 }
 
 //función que genera error genérico 
@@ -60,11 +51,45 @@ function AlertaMensajeError() {
     });
     $('#mensajeError').text(' No hay datos.');
     $("#modalError").dialog('open');
+
+}
+
+function AlertaMensajeConexion() {
+
+    $("#modalError").dialog({
+        resizable: false,
+        height: "auto",
+        width: 400,
+        modal: true,
+        autoOpen: false,
+        show: {
+            effect: "blind",
+            duration: 1000
+        },
+        hide: {
+            effect: "slide",
+            duration: 1000
+        },
+        buttons: {
+            OK: function () {
+                $(this).dialog("close");
+                $('#tablaConsulta').hide();
+                $('body').loading('stop');
+
+            }
+        },
+        open: function (event, ui) {
+            $(".ui-dialog-titlebar-close", ui.dialog | ui).hide();
+        }
+    });
+    $('#mensajeError').text('Problemas al conectarse a la base de datos.');
+    $("#modalError").dialog('open');
+
 }
 
 function alertaMensajeConDatos(cabecera, sabana) {
 
-       $("#modalOpciones").dialog({
+    $("#modalOpciones").dialog({
         resizable: false,
         height: "auto",
         width: 400,
@@ -88,6 +113,7 @@ function alertaMensajeConDatos(cabecera, sabana) {
             Excel: function () {
                 ConfigurarColumnas(cabecera, sabana, 1);
                 $(this).dialog("close");
+                $('#TablaPanel').hide();
             }
         },
         open: function (event, ui) {
@@ -101,9 +127,7 @@ function alertaMensajeConDatos(cabecera, sabana) {
 
 //Carga menú en datatree
 function CargaMenu(data) {
-    window.console && console.log('Entranado al menu');
-    var obj = $.parseJSON(data.d);
-    window.console && console.log(obj);
+      var obj = $.parseJSON(data.d);
     if (obj.resultado) {
         window.console && console.log('respuesta OK del servicio');
         var listadoOpciones = new Array();
@@ -122,7 +146,6 @@ function CargaMenu(data) {
     } else {
         window.console && console.log('respuesta NOK del servicio - ' + obj.mensaje);
     }
-
 }
 
 //escribe consulta en html
@@ -158,27 +181,30 @@ function ObtenerParametros() {
     listadoParametro.forEach(
         function (item) {
             window.console && console.log(item);
+            NombreParamExcel = item.Nombre;
+            valorParam = $('#' + item.Id).val();
             if (parametros === "") {
-                window.console && console.log(parametroParaExcel);
-               valorParam = $('#' + item.Id).val();
-                window.console && console.log(valorParam);
                 parametros = item.Id + "#" + valorParam;
             }
             else {
                 parametros = parametros + "|" + item.Id + "#" + $("#" + item.Id).val();
             }
-            parametroParaExcel = parametroParaExcel + ' - ' + $('#' + item.Id).val();
+            parametroParaExcel = parametroParaExcel + ' - ' + NombreParamExcel + ': ' + valorParam;
         }
    );
-
     return parametros;
 }
 
 //despliega los parámetros
 function DesplegarParamatro(idConsulta) {
     $('#tablaConsulta').hide();
+    $('#TablaPanel').hide();
+    $('#colParametros').show();
     window.servicio.ConsultaParametros(idConsulta);
+}
 
+function EjecutarParametrosBD(idConsulta) {
+    window.servicio.EjecutarConsultaParametros(idConsulta)
 }
 
 //obtiene los valores de los parámetros con opciones
@@ -192,9 +218,8 @@ function CargaParametros(data, idConsulta) {
                 if (item.EsLista) {
                     $("#formParametro").append(
                         "<div class='form-group'><label for=\"" + item.Id + "\">" + item.Nombre + "</label>" +
-                        "<select class=\"form-control\" id=\"" + item.Id + "\"></select></div>"
+                        "<select class=\"form-control\" id=\"" + item.Id + "\"></select></div>");
 
-                    );
                     item.Lista.forEach(
                         function (elemento) {
                             $("#" + item.Id).append("<option value='" + elemento.Id + "'>" + elemento.Texto + "</option>");
@@ -233,15 +258,33 @@ function EjecutaConsultaBD(idConsulta) {
 
 //obtiene los datos de las consultas realizadas
 function DespliegaConsulta(data) {
- 
+
     var obj = $.parseJSON(data.d);
+    if (obj.resultado == false)
+    {
+        AlertaMensajeConexion();
+        return;
+    }
     var listadoConsulta = obj.cabecera;
     var listadoSabana = obj.sabana;
+    window.console && console.log(listadoSabana);
+    window.console && console.log(listadoConsulta);
+    listadoSabana.forEach(function (item) {
+        var tamanoConsulta = listadoConsulta.length
+        for (var i = 0; i < tamanoConsulta; i++) {
+            var fecha = String(item["" + listadoConsulta[i] + ""]);
+            if (fecha.toLowerCase().indexOf("date") >= 0) {
+                window.console && console.log(fecha);
+                item["" + listadoConsulta[i] + ""] = moment(fecha).format('MM/DD/YYYY');
+            } else {
+                ;
+            }
+        }
+    });
 
-    if (obj.sabana.length <= 0)
-    {
+    if (obj.sabana.length <= 0 || listadoConsulta.length <= 0) {
         AlertaMensajeError();
-      
+
     } else {
         if (table != null) {
             table.destroy();
@@ -257,7 +300,7 @@ function ConfigurarColumnas(cabecera, sabana, opc) {
     window.console && console.log("INICIO - CARGA GRILLA");
     var orden = [[0, 'asc']];
     var columnas = [];
-       try {
+    try {
         $.each(cabecera, function (index, value) {
             columnas[index] = {
                 "title": '' + value + '', "mDataProp": "" + value + "", render: function (sabana, type, row) {
@@ -275,6 +318,7 @@ function ConfigurarColumnas(cabecera, sabana, opc) {
 
 //Carga sabada de datos en grilla de datatable
 function CargaSabanaEnGrilla(id, cabecera, orden, columnas, sabana, opc) {
+    $('#TablaPanel').show();
     $('#tablaConsulta').show();
     var cantCabecera = cabecera.length;
     for (var i = 0; i < cantCabecera; i++) {
@@ -284,63 +328,62 @@ function CargaSabanaEnGrilla(id, cabecera, orden, columnas, sabana, opc) {
             titulo = i;
         }
     }
-       table = $(id).DataTable({
-            "aaData": sabana,
-            "paging": true,
-            "bFilter": true,
-            "bInfo": true,
-            "bLengthChange": true,
-            "columnDefs": [columnas],
-            "paging": true,
-            "order": orden,
-            "responsive": true,
-            "pageLength": 10,
-            "language": {
-                "sProcessing": "Procesando...",
-                "sLengthMenu": "Mostrar _MENU_ registros",
-                "sZeroRecords": "No se encontraron resultados",
-                "sEmptyTable": "Ningun dato disponible en esta tabla",
-                "sInfo": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
-                "Info": "Mostrando pagina _PAGE_ de _PAGES_",
-                "sInfoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
-                "sInfoFiltered": "(filtrado de un total de _MAX_ registros)",
-                "sInfoPostFix": "",
-                "sSearch": "Buscar: ",
-                "sUrl": "",
-                "sInfoThousands": ",",
-                "sLoadingRecords": "Cargando...",
-                "oPaginate": {
-                    "sFirst": "Primero",
-                    "sLast": "Ultimo",
-                    "sNext": "Siguiente",
-                    "sPrevious": "Anterior"
-                },
-                "oAria": {
-                    "sSortAscending": ": Activar para ordenar la columna de manera ascendente",
-                    "sSortDescending": ": Activar para ordenar la columna de manera descendente"
-                }
+    table = $(id).DataTable({
+        "aaData": sabana,
+        "paging": true,
+        "bFilter": true,
+        "bInfo": true,
+        "bLengthChange": true,
+        "columnDefs": [columnas],
+        "paging": true,
+        "order": orden,
+        "pageLength": 10,
+        "responsive": true,
+        "language": {
+            "sProcessing": "Procesando...",
+            "sLengthMenu": "Mostrar _MENU_ registros",
+            "sZeroRecords": "No se encontraron resultados",
+            "sEmptyTable": "Ningun dato disponible en esta tabla",
+            "sInfo": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+            "Info": "Mostrando pagina _PAGE_ de _PAGES_",
+            "sInfoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
+            "sInfoFiltered": "(filtrado de un total de _MAX_ registros)",
+            "sInfoPostFix": "",
+            "sSearch": "Buscar: ",
+            "sUrl": "",
+            "sInfoThousands": ",",
+            "sLoadingRecords": "Cargando...",
+            "oPaginate": {
+                "sFirst": "Primero",
+                "sLast": "Ultimo",
+                "sNext": "Siguiente",
+                "sPrevious": "Anterior"
             },
-            dom: 'Bfrtip',
-            "aoColumns": columnas,
-            buttons: [
-                            {
-                                extend: 'excel',
-                                text: '<span class="glyphicon glyphicon-list-alt" aria-hidden="false"></span>&nbsp;&nbsp;Excel',
-                                exportOptions: {
-                                    columns: [titulo]
-                                },
-                                title: nomConsulta + parametroParaExcel
-                            }
-                    ]
-        });
+            "oAria": {
+                "sSortAscending": ": Activar para ordenar la columna de manera ascendente",
+                "sSortDescending": ": Activar para ordenar la columna de manera descendente"
+            }
+        },
+        dom: 'Bfrtip',
+        "aoColumns": columnas,
+        buttons: [
+                        {
+                            extend: 'excel',
+                            text: '<span class="glyphicon glyphicon-list-alt" aria-hidden="false"></span>&nbsp;&nbsp;Excel',
+                            exportOptions: {
+                                columns: [titulo]
+                            },
+                            title: nomConsulta + " " + parametroParaExcel
+                        }
+        ]
+    });
 
-   if (opc == 1)
-   {
-       $('#tablaConsulta').hide();
-       $('.buttons-excel').click();
-   }
-  
-   $('body').loading('stop');
+    if (opc == 1) {
+        $('#tablaConsulta').hide();
+        $('.buttons-excel').click();
+    }
+
+    $('body').loading('stop');
 }
 
 var servicio = {
@@ -357,7 +400,7 @@ var servicio = {
             function (error) { ErrorGenerico(error); } //En caso de Error
           );
     },
-    
+
     ConsultaParametros: function (idConsulta) {
         var url = '../index.aspx/ConsultaParametro';
         window.console && console.log("aqui debe pasar" + url);
@@ -372,22 +415,18 @@ var servicio = {
         );
     },
 
-    EjecutarConsulta: function (idConsulta,opc) {
+    EjecutarConsulta: function (idConsulta, opc) {
         var listaParametros = ObtenerParametros();
         var url = '../index.aspx/EjecutarConsulta';
 
         var parametros = '{ idConsulta:' + idConsulta + ', parametros:"' + listaParametros + '" }';
 
-        //  alert(parametros);
-        // window.console && console.log(parametros);
-
         consumeWs(
         url,
         parametros,
         function () { AlertaInvocacion(url); }, //Antes
-        function (data) {DespliegaConsulta(data, opc);}, //Despues Exitoso       
+        function (data) { DespliegaConsulta(data, opc); }, //Despues Exitoso       
         function (error) { ErrorGenerico(error); } //En caso de Error
         );
-
     }
 }

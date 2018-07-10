@@ -98,7 +98,7 @@ namespace Sitio
                     resultado = true,
                     mensaje = mensaje,
                     lista = listaMenu
-                });
+                }); 
 
         }
 
@@ -121,8 +121,7 @@ namespace Sitio
         public static string EjecutarConsulta(int idConsulta, string parametros)
         {
               List<string> listaParametros = parametros.Split('|').ToList();
-            //List<string> listaParametros = null;
-                    
+
             try
             {
                 VidaSecurity.Framework.Query.Transferencia.RetornoComando retorno = new VidaSecurity.Satelite.Operacion().EjecutarConsulta(idConsulta, listaParametros);
@@ -132,7 +131,7 @@ namespace Sitio
                   {
                       resultado = true,
                       cabecera = retorno.Cabeceras,
-                      sabana = retorno.Sabana.ToString()
+                      sabana = retorno.Sabana
                   });
             }
             catch (Exception ex)
@@ -145,6 +144,36 @@ namespace Sitio
                  });
             }
         }
+
+      /*  [System.Web.Services.WebMethod]
+        public static string EjecutarConsultaParametro(int idConsulta, string parametros)
+        {
+            List<string> listaParametros = parametros.Split('|').ToList();
+
+            try
+            {
+                VidaSecurity.Framework.Query.Transferencia.RetornoComando retorno = new VidaSecurity.Satelite.Operacion().EjecutarConsultaParametro(idConsulta);
+
+                return JsonConvert.SerializeObject(
+                  new
+                  {
+                      resultado = true,
+                      cabecera = retorno.Cabeceras,
+                      sabana = retorno.Sabana
+                  });
+            }
+            catch (Exception ex)
+            {
+                return JsonConvert.SerializeObject(
+                 new
+                 {
+                     resultado = false,
+                     mensaje = ex.Message
+                 });
+            }
+        }*/
+
+
 
         [System.Web.Services.WebMethod]
         public static string ConsultaConexion(int idConsulta)

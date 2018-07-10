@@ -23,7 +23,7 @@
                 <div id="menu" class="treeview" style="font-size: 10px; padding: 0px 15px 0px 0px;"></div>
             </div>
         </div>
-        <div class="col-md-8">
+        <div class="col-md-8" id="colParametros">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title text-center" id="tituloCard"></h3>
@@ -40,32 +40,40 @@
                         <br />
                         <p id="mensajeError"></p>
                     </div>
-                    <div id="tablaConsulta" class="table-responsive">
-                        <table id="id_tablaConsulta" class="datatable table table-striped table-bordered compact">
-                            <thead>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
-                    </div>
                 </div>
                 <div class="panel-footer">
                 </div>
             </div>
         </div>
     </div>
-
+    <br />
+    <div class="panel panel-default" id="TablaPanel">
+        <div class="panel-heading"></div>
+        <div class="panel-body">
+            <div id="tablaConsulta" class="table-responsive">
+                <table id="id_tablaConsulta" class="table table-responsive table-striped table-bordered  dataTable no-footer" style="font-size: 14px; width: 100% !important;">
+                    <thead>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
     <script type="text/javascript">
         var listadoParametro = new Array();
 
-
         $(document).ready(function () {
-          
             window.servicio.ConsultaOpciones();
 
+            $('#TablaPanel').hide();
             $('#tablaConsulta').hide();
+            $('#colParametros').hide();
         });
     </script>
 
 </asp:Content>
+
+
+
 

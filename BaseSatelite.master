@@ -42,6 +42,7 @@
         <script type="text/javascript" src="Scripts/jquery.loading.min.js"></script>
         <script type="text/javascript" src="Scripts/configuracionDialog.js"></script>
         <script type="text/javascript" src="Scripts/jquery-ui-1.12.1.js"></script>
+         <script type="text/javascript" src="Scripts/moment.js"></script>
 
         <form id="form1" runat="server">
             <div class="table">
