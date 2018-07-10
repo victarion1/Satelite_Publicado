@@ -90,7 +90,20 @@ namespace VidaSecurity.Satelite
 
         private List<ParDato> ConsultaListaDatos(int idConsulta, string comando)
         {
-            return new List<ParDato>();
+            string str = this.ConsultaCadenaConexion(idConsulta);
+            bool esOracle = !this.DeterminaBaseDato(str);
+            RetornoComando retorno = VidaSecurity.Framework.Query.Operacion.EjecutarComando(esOracle, this.LimpiaCadena(str, esOracle), comando);
+            List<ParDato> lista = new List<ParDato>();
+            ParDato nvoDato = null;
+            foreach (DataRow item in retorno.Sabana.Rows)
+            {
+                nvoDato = new ParDato();
+                nvoDato.Id = item.ItemArray[0].ToString();
+                nvoDato.Texto = item.ItemArray[1].ToString();
+                lista.Add(nvoDato);
+            }
+
+            return lista;
         }
 
         private List<ParametroBD> ConsultaParametro(int idConsulta)
