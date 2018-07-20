@@ -2,10 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web.UI.WebControls;
 using VidaSecurity.Satelite.Transferencia;
-
-
 
 namespace Sitio
 {
@@ -33,9 +30,9 @@ namespace Sitio
 
         private static int IdConsulta;
 
-
         protected void Page_Load(object sender, EventArgs e)
         {
+
             Session = this.CodigoSesion.ToString();
             Usuario = this.UserName.ToString();
             this.hf_username.Value = Usuario;
@@ -47,25 +44,20 @@ namespace Sitio
             List<VidaSecurity.Satelite.Transferencia.UsuarioConsultas> lista = new List<UsuarioConsultas>();
             try
             {
-                 FrameWork.Logging.LogEvento.FWEscribirLog("antes de SateliteConsultaUsuario: " + Usuario, "SATELITE_WEB", "Error", "SATELITE_WEB");
+               
                 lista = new VidaSecurity.Satelite.Operacion().SateliteConsultaUsuario(Usuario);
-                 FrameWork.Logging.LogEvento.FWEscribirLog("despues de SateliteConsultaUsuario", "SATELITE_WEB", "Error", "SATELITE_WEB");
-
-
+                
             }
             catch (Exception e)
             {
                 FrameWork.Logging.LogEvento.FWEscribirLog(e.ToString(), "SATELITE_WEB", "Error", "SATELITE_WEB");
-
             }
             List<Nodo> listaMenu = new List<Nodo>();
-
 
             foreach (var nombre in from x in lista
                                    group x by x.Perfil into y
                                    select new { Nombre = y.Key })
             {
-               
                 Nodo tmp = new Nodo();
                 tmp.text = nombre.Nombre;
                 tmp.nodes = new List<Nodo>();
@@ -98,8 +90,7 @@ namespace Sitio
                     resultado = true,
                     mensaje = mensaje,
                     lista = listaMenu
-                }); 
-
+                });
         }
 
         [System.Web.Services.WebMethod]
@@ -120,11 +111,16 @@ namespace Sitio
         [System.Web.Services.WebMethod]
         public static string EjecutarConsulta(int idConsulta, string parametros)
         {
-              List<string> listaParametros = parametros.Split('|').ToList();
+            List<string> listaParametros = parametros.Split('|').ToList();
 
+            DateTime horaInicio = DateTime.Now;
             try
             {
                 VidaSecurity.Framework.Query.Transferencia.RetornoComando retorno = new VidaSecurity.Satelite.Operacion().EjecutarConsulta(idConsulta, listaParametros);
+
+                new VidaSecurity.Satelite.Operacion().GrabarLog(idConsulta, Usuario, horaInicio, retorno.Sabana.Rows.Count);
+
+                FrameWork.Logging.LogEvento.FWEscribirLog("despues de GrabarLog: " + Usuario, "SATELITE_WEB", "Error", "SATELITE_WEB");
 
                 return JsonConvert.SerializeObject(
                   new
@@ -144,36 +140,6 @@ namespace Sitio
                  });
             }
         }
-
-      /*  [System.Web.Services.WebMethod]
-        public static string EjecutarConsultaParametro(int idConsulta, string parametros)
-        {
-            List<string> listaParametros = parametros.Split('|').ToList();
-
-            try
-            {
-                VidaSecurity.Framework.Query.Transferencia.RetornoComando retorno = new VidaSecurity.Satelite.Operacion().EjecutarConsultaParametro(idConsulta);
-
-                return JsonConvert.SerializeObject(
-                  new
-                  {
-                      resultado = true,
-                      cabecera = retorno.Cabeceras,
-                      sabana = retorno.Sabana
-                  });
-            }
-            catch (Exception ex)
-            {
-                return JsonConvert.SerializeObject(
-                 new
-                 {
-                     resultado = false,
-                     mensaje = ex.Message
-                 });
-            }
-        }*/
-
-
 
         [System.Web.Services.WebMethod]
         public static string ConsultaConexion(int idConsulta)
@@ -181,5 +147,8 @@ namespace Sitio
             return new VidaSecurity.Satelite.Operacion()
                     .ConsultaCadenaConexion(idConsulta);
         }
+
+    
+       
     }
 }

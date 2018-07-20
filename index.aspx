@@ -23,14 +23,14 @@
                 <div id="menu" class="treeview" style="font-size: 10px; padding: 0px 15px 0px 0px;"></div>
             </div>
         </div>
-        <div class="col-md-8" id="colParametros">
+        <div class="col-md-8" id="colParametros" onkeypress="if(event.keyCode == 13) event.returnValue = false";>
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title text-center" id="tituloCard"></h3>
                 </div>
                 <div class="panel-body">
                     <div id="cuerpoCard"></div>
-                    <div id="btnEjecutar"></div>
+                    <div id="btnEjecutar" ></div>
                     <br />
                     <div id="modalOpciones" title="Alerta">
                         <br />
@@ -65,11 +65,20 @@
 
         $(document).ready(function () {
             window.servicio.ConsultaOpciones();
-
+            hf_username = obtenerUsuario();
             $('#TablaPanel').hide();
             $('#tablaConsulta').hide();
             $('#colParametros').hide();
         });
+
+        function obtenerUsuario() {
+            var datosTabla = $("#tblHeader").find("span");
+            var row = datosTabla[0].outerText;
+            var start_pos = row.indexOf('Conectado como: ') + 16;
+            var end_pos = row.indexOf('\nAplicación', start_pos);
+            var usuario = row.substring(start_pos, end_pos);
+            return usuario;
+        }
     </script>
 
 </asp:Content>

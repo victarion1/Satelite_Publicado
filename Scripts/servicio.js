@@ -6,14 +6,14 @@ var table;
 var nomConsulta;
 var parametroParaExcel;
 var NombreParamExcel;
+var cantRegistros;
 //Formatea fecha
-
 
 function AlertaInvocacion(url) {
     window.console && console.log('Invocando servicio... - ' + url);
 }
 
-//función que genera error genérico 
+//función que genera error genérico
 function ErrorGenerico(error) {
     $('body').loading('stop');
     window.console && console.log('Error en el servicio - ');
@@ -22,7 +22,6 @@ function ErrorGenerico(error) {
 
 //alerta mensaje de error si data no trae datos
 function AlertaMensajeError() {
-
     $("#modalError").dialog({
         resizable: false,
         height: "auto",
@@ -42,7 +41,6 @@ function AlertaMensajeError() {
                 $(this).dialog("close");
                 $('#tablaConsulta').hide();
                 $('body').loading('stop');
-
             }
         },
         open: function (event, ui) {
@@ -51,11 +49,9 @@ function AlertaMensajeError() {
     });
     $('#mensajeError').text(' No hay datos.');
     $("#modalError").dialog('open');
-
 }
 
 function AlertaMensajeConexion() {
-
     $("#modalError").dialog({
         resizable: false,
         height: "auto",
@@ -75,7 +71,6 @@ function AlertaMensajeConexion() {
                 $(this).dialog("close");
                 $('#tablaConsulta').hide();
                 $('body').loading('stop');
-
             }
         },
         open: function (event, ui) {
@@ -84,11 +79,10 @@ function AlertaMensajeConexion() {
     });
     $('#mensajeError').text('Problemas al conectarse a la base de datos.');
     $("#modalError").dialog('open');
-
 }
 
 function alertaMensajeConDatos(cabecera, sabana) {
-
+    $('#TablaPanel').hide();
     $("#modalOpciones").dialog({
         resizable: false,
         height: "auto",
@@ -108,7 +102,7 @@ function alertaMensajeConDatos(cabecera, sabana) {
             VerTabla: function () {
                 ConfigurarColumnas(cabecera, sabana, 0)
                 $(this).dialog("close");
-
+                
             },
             Excel: function () {
                 ConfigurarColumnas(cabecera, sabana, 1);
@@ -122,12 +116,11 @@ function alertaMensajeConDatos(cabecera, sabana) {
     });
     $('#mensaje').text(' Consulta en Ejecución.');
     $("#modalOpciones").dialog('open');
-
 }
 
 //Carga menú en datatree
 function CargaMenu(data) {
-      var obj = $.parseJSON(data.d);
+    var obj = $.parseJSON(data.d);
     if (obj.resultado) {
         window.console && console.log('respuesta OK del servicio');
         var listadoOpciones = new Array();
@@ -141,7 +134,6 @@ function CargaMenu(data) {
             if (!data.nodes) {
                 AnalisaConsulta(data.text, data.tags[0], data.tags[1]);
             }
-
         });
     } else {
         window.console && console.log('respuesta NOK del servicio - ' + obj.mensaje);
@@ -189,7 +181,7 @@ function ObtenerParametros() {
             else {
                 parametros = parametros + "|" + item.Id + "#" + $("#" + item.Id).val();
             }
-            parametroParaExcel = parametroParaExcel + ' - ' + NombreParamExcel + ': ' + valorParam;
+            parametroParaExcel = parametroParaExcel + ' | ' + NombreParamExcel + ': ' + valorParam;
         }
    );
     return parametros;
@@ -209,7 +201,6 @@ function EjecutarParametrosBD(idConsulta) {
 
 //obtiene los valores de los parámetros con opciones
 function CargaParametros(data, idConsulta) {
-
     var obj = $.parseJSON(data.d);
     if (obj.resultado) {
         listadoParametro = obj.param;
@@ -228,7 +219,7 @@ function CargaParametros(data, idConsulta) {
                 } else {
                     $("#formParametro").append(
                         "<div class='form-group'><label for=\"" + item.Id + "\">" + item.Nombre + "</label>" +
-                        "<input type=\"text\" class=\"form-control\" id=\"" + item.Id + "\"></div>");
+                        "<input type=\"text\" class=\"form-control\" id=\"" + item.Id + "\" onkeypress=\"pulsar(event)\">  </div>");
                 }
             }
         );
@@ -236,13 +227,13 @@ function CargaParametros(data, idConsulta) {
         $("#btnExcel").html("");
 
         $("#btnEjecutar").append(
-            "<button type='button' class='btn btn-default' onclick='EjecutaConsultaBD(" + idConsulta + ");'>" +
+            "<button type='button' class='btn btn-default' onclick='EjecutaConsultaBD(" + idConsulta + ");  '>" +
             "<span class='glyphicon glyphicon-circle-arrow-right' aria-hidden='true'></span> Ejecutar" +
             "</button>"
         );
         $("#btnExcel").append(
             "<button type='button' class='btn btn-default'>" +
-            "<span class='glyphicon glyphicon-circle-arrow-right' aria-hidden='true'></span> Excel" +
+            "<span class='glyphicon glyphicon-circlonle-arrow-right' aria-hidden='true'></span> Excel" +
             "</button>"
         );
     } else {
@@ -252,30 +243,29 @@ function CargaParametros(data, idConsulta) {
 
 //envía a ejecutar query de la consulta || opc = 0 (ver tabla), opc=1 (ver excel)
 function EjecutaConsultaBD(idConsulta) {
+    $('#TablaPanel').hide();
     $('body').loading({ message: 'Ejecutando Consulta' });
     window.servicio.EjecutarConsulta(idConsulta)
+    
 }
 
 //obtiene los datos de las consultas realizadas
 function DespliegaConsulta(data) {
-
     var obj = $.parseJSON(data.d);
-    if (obj.resultado == false)
-    {
+    if (obj.resultado == false) {
         AlertaMensajeConexion();
         return;
     }
     var listadoConsulta = obj.cabecera;
     var listadoSabana = obj.sabana;
-    window.console && console.log(listadoSabana);
-    window.console && console.log(listadoConsulta);
+    cantRegistros = listadoSabana.length;
+    window.console && console.log(cantRegistros);
     listadoSabana.forEach(function (item) {
         var tamanoConsulta = listadoConsulta.length
         for (var i = 0; i < tamanoConsulta; i++) {
             var fecha = String(item["" + listadoConsulta[i] + ""]);
             if (fecha.toLowerCase().indexOf("date") >= 0) {
-                window.console && console.log(fecha);
-                item["" + listadoConsulta[i] + ""] = moment(fecha).format('MM/DD/YYYY');
+                item["" + listadoConsulta[i] + ""] = moment(fecha).format('DD-MM-YYYY');
             } else {
                 ;
             }
@@ -284,7 +274,6 @@ function DespliegaConsulta(data) {
 
     if (obj.sabana.length <= 0 || listadoConsulta.length <= 0) {
         AlertaMensajeError();
-
     } else {
         if (table != null) {
             table.destroy();
@@ -310,10 +299,8 @@ function ConfigurarColumnas(cabecera, sabana, opc) {
         });
     } catch (e) {
         window.console && console.log(e);
-
     }
     CargaSabanaEnGrilla(id, cabecera, orden, columnas, sabana, opc);
-
 }
 
 //Carga sabada de datos en grilla de datatable
@@ -364,8 +351,10 @@ function CargaSabanaEnGrilla(id, cabecera, orden, columnas, sabana, opc) {
                 "sSortDescending": ": Activar para ordenar la columna de manera descendente"
             }
         },
+
         dom: 'Bfrtip',
         "aoColumns": columnas,
+
         buttons: [
                         {
                             extend: 'excel',
@@ -373,10 +362,11 @@ function CargaSabanaEnGrilla(id, cabecera, orden, columnas, sabana, opc) {
                             exportOptions: {
                                 columns: [titulo]
                             },
-                            title: nomConsulta + " " + parametroParaExcel
+                            title: nomConsulta,
+                            message: parametroParaExcel
                         }
         ]
-    });
+    })
 
     if (opc == 1) {
         $('#tablaConsulta').hide();
@@ -411,11 +401,12 @@ var servicio = {
             parametros,
             function () { AlertaInvocacion(url); }, //Antes
             function (data) { CargaParametros(data, idConsulta); }, //Despues Exitoso
-            function (error) { ErrorGenerico(error); } //En caso de Error       
+            function (error) { ErrorGenerico(error); } //En caso de Error
         );
     },
 
     EjecutarConsulta: function (idConsulta, opc) {
+        $('#TablaPanel').hide();
         var listaParametros = ObtenerParametros();
         var url = '../index.aspx/EjecutarConsulta';
 
@@ -425,7 +416,7 @@ var servicio = {
         url,
         parametros,
         function () { AlertaInvocacion(url); }, //Antes
-        function (data) { DespliegaConsulta(data, opc); }, //Despues Exitoso       
+        function (data) { DespliegaConsulta(data, opc); }, //Despues Exitoso
         function (error) { ErrorGenerico(error); } //En caso de Error
         );
     }
