@@ -1,230 +1,329 @@
-﻿using FrameWork.Common;
-using FrameWork.Data;
-using FrameWork.Logging;
+﻿// Decompiled with JetBrains decompiler
+// Type: VidaSecurity.Framework.Query.Operacion
+// Assembly: VidaSecurity.Framework.Query, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+// MVID: 9DD9E185-F5E8-47E5-8AC0-48BCE51D0C82
+// Assembly location: D:\Nueva carpeta (2)\VidaSecurity.Framework.Query.dll
+
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
+using System.Data.Common;
+using System.Data.OracleClient;
+using System.Data.SqlClient;
 using VidaSecurity.Framework.Query.Transferencia;
-using VidaSecurity.Satelite.Transferencia;
-using VidaSecurity.Satelite.Util;
 
-namespace VidaSecurity.Satelite
+namespace VidaSecurity.Framework.Query
 {
-    public class Operacion
+    public class Operacion : IDisposable
     {
-        private const string ConexionLog = "Framework";
-        private const string CUP = "PortalSecurity";
-        private const string NombreServicio = "Consulta Satelite";
-        private const string Usuario = "UsrSatelite";
+        private OracleType tiporetorno = OracleType.Cursor;
+        private const int TimeOut = 3600;
+        private const string Desconocido = "DESCONOCIDO";
+        private OracleConnection fwconexion;
+        private static string cadenaConexion;
+        private int timeout;
+        private OracleTransaction fwtransaccion;
 
-        public List<UsuarioConsultas> SateliteConsultaUsuario(string username)
+        [Obsolete("NO USAR", true)]
+        public Operacion()
         {
-            List<UsuarioConsultas> usuarioConsultasList = new List<UsuarioConsultas>();
-            try
-            {
-                object obj = (object)null;
-                DataTable dataTable;
-                Conexion.FWEjecutarConsulta(null,
-                                            "SATELITE",
-                                            "usp_ConsultarUsuarioSatelite",
-                                            ConnectionBase.ProcedureType.Procedure,
-                                            new object[] { username },
-                                            new object[] { },
-                                            out obj,
-                                            out dataTable
-                                            );
-
-                foreach (DataRow row in (InternalDataCollectionBase)dataTable.Rows)
-                    usuarioConsultasList.Add(new UsuarioConsultas(row));
-                return usuarioConsultasList;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error - " + ex.Message, ex);
-            }
         }
 
-        public List<Parametro> RetornaParametro(int idConsulta)
+        public Operacion(string cadenaconexion)
         {
-            List<Parametro> parametroList = new List<Parametro>();
-            foreach (ParametroBD parametroBd in this.ConsultaParametro(idConsulta))
+            Operacion.cadenaConexion = cadenaconexion;
+            this.timeout = 3600;
+            this.tiporetorno = OracleType.Cursor;
+            this.Abrir();
+        }
+
+        public Operacion(string cadenaconexion, int timeout)
+        {
+            Operacion.cadenaConexion = cadenaconexion;
+            this.timeout = timeout;
+            this.tiporetorno = OracleType.Cursor;
+            this.Abrir();
+        }
+
+        public void Dispose()
+        {
+            try
             {
-                if (parametroBd.TipoAyuda.ToUpper().Trim().Equals("LIST"))
+                this.fwconexion.Close();
+                this.fwconexion.Dispose();
+            }
+            catch
+            {
+            }
+            GC.Collect();
+        }
+
+        public void Ejecutar(string nombreprocedimiento, bool esconsulta, object[] paramin, object[] paramout, out object retorno, out DataTable cursor)
+        {
+            retorno = (object)null;
+            cursor = new DataTable();
+            try
+            {
+                if (this.fwconexion.State != ConnectionState.Open)
+                    this.Abrir();
+                if (this.fwconexion.State != ConnectionState.Open)
+                    throw new Exception("La conexion se encuentra cerrada.");
+                using (OracleCommand comando = this.ObtenerComando(nombreprocedimiento))
                 {
-                    IEnumerable<ParDato> source = ((IEnumerable<string>)parametroBd.AyudaValores.Split(',')).Select<string, ParDato>((Func<string, ParDato>)(x => new ParDato()
-                    {
-                        Id = x,
-                        Texto = x
-                    }));
-
-                    parametroList.Add(new Parametro()
-                    {
-                        Nombre = parametroBd.Nombre,
-                        TipoDato = parametroBd.TipoDato,
-                        EsLista = true,
-                        Lista = source.ToList<ParDato>()
-                    });
-
+                    this.tiporetorno = this.ObtenerParametros(paramin, comando.Parameters);
+                    this.EjecutarComando(comando, esconsulta, this.tiporetorno, out cursor, out retorno);
+                    this.ObtenerParametrosSalida(comando.Parameters, this.tiporetorno, ref retorno, paramout);
+                    comando.Dispose();
                 }
-                else if (parametroBd.TipoAyuda.ToUpper().Trim().Equals("QUERY"))
-                    parametroList.Add(new Parametro()
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+        public void Ejecutar(Operacion.QueryType tiposp, string nombreprocedimiento, ref List<OracleParameter> coleccionparametros, out object retorno, out DataTable cursor)
+        {
+            retorno = (object)null;
+            cursor = new DataTable();
+            try
+            {
+                if (this.fwconexion.State != ConnectionState.Open)
+                    this.Abrir();
+                if (this.fwconexion.State != ConnectionState.Open)
+                    throw new Exception("La conexion se encuentra cerrada.");
+                using (OracleCommand command = this.fwconexion.CreateCommand())
+                {
+                    command.CommandText = nombreprocedimiento;
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.CommandTimeout = this.timeout;
+                    command.Parameters.Clear();
+                    foreach (OracleParameter oracleParameter in coleccionparametros)
+                        command.Parameters.Add(oracleParameter);
+                    switch (tiposp)
                     {
-                        Nombre = parametroBd.Nombre,
-                        TipoDato = parametroBd.TipoDato,
-                        EsLista = true,
-                        Lista = this.ConsultaListaDatos(idConsulta, parametroBd.AyudaValores)
-                    });
-                else
-                    parametroList.Add(new Parametro()
+                        case Operacion.QueryType.NonQuery:
+                            command.ExecuteNonQuery();
+                            break;
+                        case Operacion.QueryType.Scalar:
+                            retorno = command.ExecuteScalar();
+                            break;
+                        case Operacion.QueryType.Reader:
+                            cursor.Load((IDataReader)command.ExecuteReader());
+                            break;
+                    }
+                    coleccionparametros.Clear();
+                    foreach (OracleParameter parameter in (DbParameterCollection)command.Parameters)
+                        coleccionparametros.Add(parameter);
+                    command.Dispose();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+        internal void Abrir()
+        {
+            this.fwconexion = new OracleConnection(Operacion.cadenaConexion);
+            this.fwconexion.Open();
+        }
+
+        internal OracleCommand ObtenerComando(string nombreprocedimiento)
+        {
+            OracleCommand command = this.fwconexion.CreateCommand();
+            command.CommandText = nombreprocedimiento;
+            command.CommandType = CommandType.StoredProcedure;
+            command.CommandTimeout = this.timeout;
+            OracleCommandBuilder.DeriveParameters(command);
+            return command;
+        }
+
+        internal OracleType ObtenerParametros(object[] parametrosentrada, OracleParameterCollection coleccionparametros)
+        {
+            OracleType oracleType = OracleType.Cursor;
+            int index = 0;
+            try
+            {
+                foreach (OracleParameter coleccionparametro in (DbParameterCollection)coleccionparametros)
+                {
+                    switch (coleccionparametro.Direction)
                     {
-                        Nombre = parametroBd.Nombre,
-                        TipoDato = parametroBd.TipoDato,
-                        EsLista = false,
-                        Lista = new List<ParDato>()
-                    });
-            }
-            return parametroList;
-        }
-
-        private List<ParDato> ConsultaListaDatos(int idConsulta, string comando)
-        {
-            string str = this.ConsultaCadenaConexion(idConsulta);
-            bool esOracle = !this.DeterminaBaseDato(str);
-            RetornoComando retorno = VidaSecurity.Framework.Query.Operacion.EjecutarComando(esOracle, this.LimpiaCadena(str, esOracle), comando);
-            List<ParDato> lista = new List<ParDato>();
-            ParDato nvoDato = null;
-            foreach (DataRow item in retorno.Sabana.Rows)
-            {
-                nvoDato = new ParDato();
-                nvoDato.Id = item.ItemArray[0].ToString();
-                nvoDato.Texto = item.ItemArray[1].ToString();
-                lista.Add(nvoDato);
-            }
-
-            return lista;
-        }
-
-        private List<ParametroBD> ConsultaParametro(int idConsulta)
-        {
-            List<ParametroBD> parametroBdList = new List<ParametroBD>();
-            try
-            {
-                object obj = (object)null;
-                DataTable dataTable;
-                Conexion.FWEjecutarConsulta(null, "SATELITE", "ups_ConsultaParametros", ConnectionBase.ProcedureType.Procedure, new object[]
-                { idConsulta}, new object[] { }, out obj, out dataTable);
-                foreach (DataRow row in (InternalDataCollectionBase)dataTable.Rows)
-                    parametroBdList.Add(new ParametroBD(row));
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error - " + ex.Message, ex);
-            }
-            return parametroBdList;
-        }
-
-        public string ConsultaCadenaConexion(int idConsulta)
-        {
-            string str = string.Empty;
-            try
-            {
-                object obj = (object)null;
-                DataTable dataTable;
-                Conexion.FWEjecutarConsulta(null, "SATELITE", "ups_ConsultaCadenaConexion", ConnectionBase.ProcedureType.Procedure, new object[]
-                { idConsulta}, new object[] { }, out obj, out dataTable);
-                if (dataTable.Rows.Count > 0)
-                    return Dato.GetDato<string>((object)dataTable.Rows[0]["CONEXION"].ToString());
-            }
-            catch (Exception ex)
-            {
-                new FwLog("PortalSecurity").EscribeLog("Error", string.Format("Ha ocurrido un error obtener la cadena de conexión, el mensaje es : {0} ", (object)ex.Message));
-                str = JsonConvert.SerializeObject((object)new
-                {
-                    resultado = false,
-                    mensaje = ex
-                });
-            }
-            return string.Empty;
-        }
-
-        public string ConsultaQuery(int idConsulta)
-        {
-            string str = string.Empty;
-            try
-            {
-                object obj = (object)null;
-                DataTable dataTable;
-                Conexion.FWEjecutarConsulta(null, "SATELITE", "usp_DetalleConsulta", ConnectionBase.ProcedureType.Procedure, new object[]
-                {idConsulta}, new object[] { }, out obj, out dataTable);
-                if (dataTable.Rows.Count > 0)
-                    return Dato.GetDato<string>(dataTable.Rows[0]["Query"]);
-            }
-            catch (Exception ex)
-            {
-                new FwLog("PortalSecurity").EscribeLog("Error", string.Format("Ha ocurrido un error al consultar la cadena de conexión, el mensaje es : {0} ", (object)ex.Message));
-                str = JsonConvert.SerializeObject((object)new
-                {
-                    resultado = false,
-                    mensaje = ex
-                });
-            }
-            return string.Empty;
-        }
-
-        public RetornoComando EjecutarConsulta(int idConsulta, List<string> parametros)
-        {
-            string str = this.ConsultaCadenaConexion(idConsulta);
-            string consulta = this.ConsultaQuery(idConsulta);
-            string comandoSql = this.GeneraComando(idConsulta, consulta, parametros);
-            bool esOracle = !this.DeterminaBaseDato(str);
-            return VidaSecurity.Framework.Query.Operacion.EjecutarComando(esOracle, this.LimpiaCadena(str, esOracle), comandoSql);
-        }
-
-        private string LimpiaCadena(string cadena, bool esOracle)
-        {
-            string str1 = string.Empty;
-            if (esOracle)
-            {
-                string str2 = cadena;
-                char[] chArray = new char[1] { ';' };
-                foreach (string str3 in str2.Split(chArray))
-                {
-                    if (!str3.ToUpper().StartsWith("PROVIDER"))
-                        str1 = string.IsNullOrEmpty(str1) ? str3 : str1 + "; " + str3;
+                        case ParameterDirection.Input:
+                            if (parametrosentrada.GetValue(index) == null)
+                                coleccionparametro.Value = (object)DBNull.Value;
+                            else
+                                coleccionparametro.Value = parametrosentrada.GetValue(index);
+                            ++index;
+                            continue;
+                        case ParameterDirection.Output:
+                            coleccionparametro.Value = (object)DBNull.Value;
+                            continue;
+                        case ParameterDirection.InputOutput:
+                            if (parametrosentrada.GetValue(index) == null)
+                                coleccionparametro.Value = (object)DBNull.Value;
+                            else
+                                coleccionparametro.Value = parametrosentrada.GetValue(index);
+                            ++index;
+                            continue;
+                        case ParameterDirection.ReturnValue:
+                            oracleType = coleccionparametro.OracleType;
+                            coleccionparametro.Value = (object)DBNull.Value;
+                            continue;
+                        default:
+                            coleccionparametro.Value = (object)DBNull.Value;
+                            continue;
+                    }
                 }
-                return str1;
             }
-            string str4 = cadena;
-            char[] chArray1 = new char[1] { ';' };
-            foreach (string str2 in str4.Split(chArray1))
+            catch (Exception ex)
             {
-                if (!str2.ToUpper().StartsWith("DRIVER"))
-                    str1 = string.IsNullOrEmpty(str1) ? str2 : str1 + "; " + str2;
+                throw new Exception(ex.Message, ex);
             }
-            return str1;
+            return oracleType;
         }
 
-        private bool DeterminaBaseDato(string cadenaConexion)
+        internal void EjecutarComando(OracleCommand comando, bool esconsulta, OracleType tiporetorno, out DataTable cursor, out object retorno)
         {
-            return cadenaConexion.ToUpper().Contains("{SQL SERVER}");
+            cursor = new DataTable();
+            retorno = (object)null;
+            if (esconsulta)
+            {
+                if (tiporetorno.Equals((object)OracleType.Cursor))
+                    cursor.Load((IDataReader)comando.ExecuteReader());
+                retorno = comando.ExecuteScalar();
+            }
+            comando.ExecuteNonQuery();
         }
 
-        private string GeneraComando(int idConsulta, string consulta, List<string> parametros)
+        internal void ObtenerParametrosSalida(OracleParameterCollection coleccionparametros, OracleType tiporetorno, ref object retorno, object[] paramout)
         {
-            foreach (Parametro parametro1 in this.RetornaParametro(idConsulta))
+            int index = 0;
+            foreach (OracleParameter coleccionparametro in (DbParameterCollection)coleccionparametros)
             {
-                string newValue = string.Empty;
-                foreach (string parametro2 in parametros)
+                switch (coleccionparametro.Direction)
                 {
-                    if (parametro2.StartsWith(parametro1.Id))
-                        newValue = parametro2.Replace(parametro1.Id + "#", string.Empty);
+                    case ParameterDirection.Output:
+                        paramout[index] = this.EstablecerParametro(paramout[index], coleccionparametro.Value);
+                        ++index;
+                        continue;
+                    case ParameterDirection.InputOutput:
+                        paramout[index] = this.EstablecerParametro(paramout[index], coleccionparametro.Value);
+                        ++index;
+                        continue;
+                    case ParameterDirection.ReturnValue:
+                        if (!tiporetorno.Equals((object)OracleType.Cursor))
+                        {
+                            retorno = this.EstablecerParametro(retorno, coleccionparametro.Value);
+                            continue;
+                        }
+                        continue;
+                    default:
+                        continue;
                 }
-                string upper = parametro1.Nombre.ToUpper();
-                consulta = consulta.ToUpper().Replace("@" + upper + "@", newValue);
             }
-            return consulta;
+        }
+
+        internal object EstablecerParametro(object paramout, object valor)
+        {
+            try
+            {
+                if (valor.Equals((object)null) || valor.Equals((object)DBNull.Value))
+                    return (object)null;
+                Type type = valor.GetType();
+                if (!type.Equals(typeof(DataTable)) && !type.Equals(typeof(IDataReader)) && (!type.Equals(typeof(OracleDataReader)) && !type.Equals(typeof(SqlDataReader))))
+                    return valor;
+                paramout = (object)new DataTable();
+                ((DataTable)paramout).Load((IDataReader)valor);
+                return paramout;
+            }
+            catch
+            {
+                return valor;
+            }
+        }
+
+        public static void EjecutarAccion(string cadenaconexion, string nombreprocedimiento, object[] paramin, object[] paramout, out object retorno)
+        {
+            retorno = (object)null;
+            DataTable cursor = new DataTable();
+            using (Operacion operacion = new Operacion(cadenaconexion))
+                operacion.Ejecutar(nombreprocedimiento, false, paramin, paramout, out retorno, out cursor);
+        }
+
+        public static void EjecutarConsulta(string cadenaconexion, string nombreprocedimiento, object[] paramin, object[] paramout, out object retorno, out DataTable cursor)
+        {
+            retorno = (object)null;
+            cursor = new DataTable();
+            using (Operacion operacion = new Operacion(cadenaconexion))
+                operacion.Ejecutar(nombreprocedimiento, true, paramin, paramout, out retorno, out cursor);
+        }
+
+        public static T EjecutarEscalar<T>(string cadenaconexion, string nombreprocedimiento, object[] paramin, object[] paramout)
+        {
+            object retorno = (object)null;
+            DataTable cursor = new DataTable();
+            using (Operacion operacion = new Operacion(cadenaconexion))
+                operacion.Ejecutar(nombreprocedimiento, false, paramin, paramout, out retorno, out cursor);
+            return (T)Convert.ChangeType(retorno, typeof(T));
+        }
+
+        public static RetornoComando EjecutarComando(bool esOracle, string cadenaconexion, string comandoSql)
+        {
+            DataTable tabla = new DataTable();
+          
+            DbConnection dbConnection = !esOracle ? (DbConnection)new SqlConnection(cadenaconexion) : (DbConnection)new OracleConnection(cadenaconexion);
+            if (dbConnection.State != ConnectionState.Open)
+                dbConnection.Open();
+            if (dbConnection.State != ConnectionState.Open)
+                throw new Exception("La conexion se encuentra cerrada.");
+            try
+            {
+                using (DbCommand command = dbConnection.CreateCommand())
+                {
+                    command.CommandText = comandoSql;
+                    command.CommandType = CommandType.Text;
+                    command.CommandTimeout = 3600;
+                    command.Parameters.Clear();
+                    tabla.Load((IDataReader)command.ExecuteReader());
+                    command.Dispose();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(string.Format("Ha ocurrido un error al ejecutar la consulta: {0}", (object)ex.Message), ex);
+            }
+
+            return Operacion.AnalizaRetorno(tabla);
+        }
+
+        public static string EjecutarComandoJson(bool esOracle, string cadenaconexion, string comandoSql)
+        {
+            return JsonConvert.SerializeObject((object)Operacion.EjecutarComando(esOracle, cadenaconexion, comandoSql), (Formatting)1);
+        }
+
+        internal static RetornoComando AnalizaRetorno(DataTable tabla)
+        {
+            List<string> cabeceras = new List<string>();
+            DataTable dataTable = new DataTable();
+            foreach (DataColumn column in (InternalDataCollectionBase)tabla.Columns)
+                cabeceras.Add(column.Caption);
+            dataTable = tabla.Copy();
+            return new RetornoComando(cabeceras, tabla);
+        }
+
+        internal static string ObtenerCadena()
+        {
+            return Operacion.cadenaConexion;
+        }
+
+        public enum QueryType
+        {
+            NonQuery,
+            Scalar,
+            Reader,
         }
     }
 }
